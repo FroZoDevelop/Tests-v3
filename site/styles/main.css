@@ -1,0 +1,55 @@
+body{
+  margin : 0px;
+  background-image : url( "../images/background.png" );
+  font-family : Century Gothic;
+}
+
+.center{
+  position : absolute;
+  left : 0px;
+  top : 0px;
+  text-align : center;
+}
+
+.button, .text, .password{
+  font-family : Century Gothic;
+  font-size : 20px;
+  letter-spacing : 1px;
+  padding : 10px;
+  background : none;
+  font-weight : bold;
+  box-shadow : -3px 3px 3px rgba( 50, 30, 30, 0.15 );
+  outline : none;
+  margin-bottom : 5px;
+}
+
+.button{
+  border : rgb( 61, 201, 179 ) 2px solid;
+  border-radius : 5px;
+  text-transform : uppercase;
+  color : rgb( 61, 201, 179 );
+}
+
+.button:hover{
+	cursor : pointer;
+	background-color : rgba( 122, 218, 203, 0.2 );
+}
+
+.text, .password{
+  border : none;
+  border-bottom : rgb( 61, 201, 179 ) 2px solid;
+  border-radius : 5px;
+  text-align : center;
+}
+
+.text:hover, .password:hover{
+  background-color : rgba( 138, 134, 134, 0.1 );
+}
+
+.text:focus, .password:focus{
+  border-bottom : rgba( 138, 134, 134, 0.3 ) 2px solid;
+}
+
+.fullWidth{
+  width : 100%;
+}

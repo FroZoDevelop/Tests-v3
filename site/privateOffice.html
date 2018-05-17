@@ -1,0 +1,50 @@
+﻿<!DOCTYPE HTML>
+
+<html>
+  <head>
+    <meta charset = "utf8">
+    <title> Тесты | Личный кабинет </title>
+    
+    <link rel = "stylesheet" type = "text/css" href = "styles/main.css">
+    <link rel = "stylesheet" type = "text/css" href = "styles/privateOffice.css">
+    
+    <script type = "text/javascript" src = "scripts/jquery-3.3.1.min.js"></script>
+    <script type = "text/javascript" src = "scripts/cookieModule.js"></script>
+    <script type = "text/javascript" src = "scripts/parseURLModule.js"></script>
+    <script type = "text/javascript" src = "scripts/positionModule.js"></script>
+    <script type = "text/javascript" src = "scripts/sendRequestModule.js"></script>
+    <script type = "text/javascript" src = "scripts/privateOffice.js"></script>
+  </head>
+  
+  <body>
+    <div class = "head">
+      <div id = "backButton"> Назад </div><!--
+      --><div id = "exitButton"> Выйти </div>
+    </div>
+    
+    <div id = "centerDiv" class = "center">
+      <div id = "selectTestsDiv" hidden>
+        <input type = "button" id = "myTestsButton" class = "button fullWidth" value = "Мои тесты"> <br>
+        <input type = "button" class = "button fullWidth" value = "Тесты, на которые я подписан">
+      </div>
+      
+      <!-- <table id = "addTest" hidden>
+        <tr> <td class = "input"> <input type = "text" id = "testName" class = "addTestInput" placeholder = "Название теста"> </td> </tr>
+        <tr> <td class = "button"> <input type = "button" id = "createTestButton" class = "fullWidth" value = "Добавить"> </td> </tr>
+      </table> -->
+    </div>
+    
+    <table id = "myTestsTable" class = "editTable" hidden>
+      <tr>
+        <td></td>
+        <td id = "newTestNameTd" class = "bottomBorder leftBorder">Название теста</td>
+        <td id = "editNewTestNameTd" class = "allBorder icon edit" isSelected = 0></td>
+        <td id = "addNewTestTd" class = "allBorder icon add"></td>
+      </tr>
+    </table>
+    
+    <!-- <table id = "editTest" class = "questions" hidden>
+      
+    </table> -->
+  </body>
+</html>
