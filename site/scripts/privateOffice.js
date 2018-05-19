@@ -1,20 +1,26 @@
 let cookie, originURL, lastMyTestId, page;
 
 function switchPage(){
-  let selectTestsDiv, backButton, myTestsTable;
+  let selectTestsDiv, backButton, myTestsTable, editTestTable;
   
   selectTestsDiv = $( "#selectTestsDiv" );
   backButton = $( "#backButton" );
   myTestsTable = $( "#myTestsTable" );
+  editTestTable = $( "#editTestTable" );
   
   selectTestsDiv.attr( "hidden", true );
   backButton.css( "display", "none" );
   myTestsTable.attr( "hidden", true );
+  editTestTable.attr( "hidden", true );
   
   switch( page ){
     case "selectTests": selectTestsDiv.attr( "hidden", false ); break;
     case "myTests":
       myTestsTable.attr( "hidden", false );
+      backButton.css( "display", "inline-block" );
+    break;
+    case "editTest":
+      editTestTable.attr( "hidden", false );
       backButton.css( "display", "inline-block" );
     break;
   }
@@ -61,6 +67,10 @@ function myTestsButtonHandler(){
 function backButtonHandler(){
   switch( page ){
     case "myTests": switchToSelectTestsPage(); break;
+    case "editTest":
+      page = "myTests";
+      switchPage();
+    break;
   }
 }
 
@@ -90,7 +100,7 @@ function editHTMLWithInput( target, mode, successFunc ){
   }
 }
 
-function editTestNameTdHandler(){
+function editNameHandler(){
   let ths, target;
   
   ths = $( this );
@@ -108,7 +118,7 @@ function editTestNameTdHandler(){
 }
 
 function editMyTestTdHandler( testId ){
-  let data;
+  let data, questions;
   
   data = {
     "event" : "get questions",
@@ -117,7 +127,16 @@ function editMyTestTdHandler( testId ){
   };
   
   sendRequest( "POST", originURL, data, ( r ) => {
-    alert( r[ "message" ] );
+    if( r[ "event" ] == "success" ){
+      page = "editTest";
+      switchPage();
+      history.pushState( "", "", "/privateOffice.html?page=editTest&testId=" + testId );
+      questions = r[ "message" ];
+      
+      /* for( let i = 0; i < questions.length; i++ ){
+        getEditTableTr( i + 1, questions[i][2] ).insertBefore( $( "#newQuestionNameTd" ).parent() );
+      } */
+    }
   } );
 }
 
@@ -264,12 +283,16 @@ $( document ).ready( () => {
   
   switch( parsedURL[ "page" ] ){
     case "myTests": myTestsButtonHandler(); break;
+    case "editTest":
+      if( parsedURL[ "testId" ] != undefined ) editMyTestTdHandler( parsedURL[ "testId" ] );
+    break;
     default: switchToSelectTestsPage()
   }
   
   $( "#exitButton" ).click( exitButtonHandler );
   $( "#myTestsButton" ).click( myTestsButtonHandler );
   $( "#backButton" ).click( backButtonHandler );
-  $( "#editNewTestNameTd" ).click( editTestNameTdHandler );
+  $( "#editNewTestNameTd" ).click( editNameHandler );
   $( "#addNewTestTd" ).click( addNewTestTdHandler );
+  $( "#editNewQuestionNameTd" ).click( editNameHandler );
 } );

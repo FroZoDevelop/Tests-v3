@@ -27,11 +27,6 @@
         <input type = "button" id = "myTestsButton" class = "button fullWidth" value = "Мои тесты"> <br>
         <input type = "button" class = "button fullWidth" value = "Тесты, на которые я подписан">
       </div>
-      
-      <!-- <table id = "addTest" hidden>
-        <tr> <td class = "input"> <input type = "text" id = "testName" class = "addTestInput" placeholder = "Название теста"> </td> </tr>
-        <tr> <td class = "button"> <input type = "button" id = "createTestButton" class = "fullWidth" value = "Добавить"> </td> </tr>
-      </table> -->
     </div>
     
     <table id = "myTestsTable" class = "editTable" hidden>
@@ -43,8 +38,13 @@
       </tr>
     </table>
     
-    <!-- <table id = "editTest" class = "questions" hidden>
-      
-    </table> -->
+    <table id = "editTestTable" class = "editTable" hidden>
+      <tr>
+        <td></td>
+        <td id = "newQuestionNameTd" class = "bottomBorder leftBorder">Вопрос</td>
+        <td id = "editNewQuestionNameTd" class = "allBorder icon edit" isSelected = 0></td>
+        <td id = "addNewQuestionTd" class = "allBorder icon add"></td>
+      </tr>
+    </table>
   </body>
 </html>
