@@ -262,3 +262,44 @@ class CDatabase:
     self.cur.execute( 'select * from questions where testId = ?', ( testId, ) )
     
     return self.getSuccess( 'custom', self.cur.fetchall() )
+  
+  def addQuestion( self, token, testId, question, splitter, answers, type ):
+    testValidInfo = self.checkValidTest( token, testId )
+    
+    if testValidInfo[0] == 'error': return [ testValidInfo[0], testValidInfo[1] ]
+    
+    self.cur.execute( 'insert into questions( testId, question, splitter, answers, type ) values( ?, ?, ?, ?, ? )', ( testId, question, splitter, answers, type ) )
+    self.cur.execute( 'select max( id ) from questions' )
+    self.conn.commit()
+    
+    return self.getSuccess( 'custom', self.cur.fetchall()[0][0] )
+  
+  def editQuestionName( self, token, questionId, question ):
+    self.cur.execute( 'select testId from questions where id = ?', ( questionId, ) )
+    testId = self.cur.fetchall()
+    
+    if len( testId ) == 0: return self.getError( 'TDE' )
+    
+    testValidInfo = self.checkValidTest( token, testId[0][0] )
+    
+    if testValidInfo[0] == 'error': return [ testValidInfo[0], testValidInfo[1] ]
+    
+    self.cur.execute( 'update questions set question = ? where id = ?', ( question, questionId ) )
+    self.conn.commit()
+    
+    return self.getSuccess( 'S' )
+  
+  def deleteQuestion( self, token, questionId ):
+    self.cur.execute( 'select testId from questions where id = ?', ( questionId, ) )
+    testId = self.cur.fetchall()
+    
+    if len( testId ) == 0: return self.getError( 'TDE' )
+    
+    testValidInfo = self.checkValidTest( token, testId[0][0] )
+    
+    if testValidInfo[0] == 'error': return [ testValidInfo[0], testValidInfo[1] ]
+    
+    self.cur.execute( 'delete from questions where id = ?', ( questionId, ) )
+    self.conn.commit()
+    
+    return self.getSuccess( 'S' )

@@ -12,13 +12,13 @@ open( 'database.db', 'w' ).close()
 
 database = CDatabase( 'database.db' )
 database.addUser( login, password )
+database.addUser( 'dick', 'ukraine' )
 token = database.addToken( login )[1]
 tokenId = database.getTokenIdByToken( token )[1]
 database.addTest( token, testName )
 
 for question in questions:
-  #database.addQuestion( token, 1, question[0], question[1], question[2], question[3] )
-  database.cur.execute( 'insert into questions( testId, question, splitter, answers, type ) values( ?, ?, ?, ?, ? )', ( question[0], question[1], question[2], question[3], question[4] ) )
+  database.addQuestion( token, question[0], question[1], question[2], question[3], question[4] )
+  #database.cur.execute( 'insert into questions( testId, question, splitter, answers, type ) values( ?, ?, ?, ?, ? )', ( question[0], question[1], question[2], question[3], question[4] ) )
 
-database.conn.commit()
 #database.addRightAnswer( token, 1, ',', '1' )

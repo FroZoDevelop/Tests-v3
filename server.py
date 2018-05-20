@@ -115,6 +115,21 @@ class CRequestHandler( BaseHTTPRequestHandler ):
       elif event == 'get questions':
         code = database.getQuestions( data[ 'token' ], data[ 'testId' ] )
         response = getResponse( code[0], code[1] )
+      
+      # [E] Add question
+      elif event == 'add question':
+        code = database.addQuestion( data[ 'token' ], data[ 'testId' ], data[ 'question' ], data[ 'splitter' ], data[ 'answers' ], data[ 'type' ] )
+        response = getResponse( code[0], code[1] )
+      
+      # [E] Edit question
+      elif event == 'edit question name':
+        code = database.editQuestionName( data[ 'token' ], data[ 'questionId' ], data[ 'question' ] )
+        response = getResponse( code[0], code[1] )
+      
+      # [E] Delete question
+      elif event == 'delete question':
+        code = database.deleteQuestion( data[ 'token' ], data[ 'questionId' ] )
+        response = getResponse( code[0], code[1] )
     except:
       response = getResponse( 'error', 'Undefined request' )
     
