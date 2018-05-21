@@ -1,17 +1,17 @@
-let cookie, originURL, lastMyTestId, page, gTestId;
+let cookie, originURL, lastMyTestId, questionsEditTable, myTestsEditTable, page, gTestId;
 
 function switchPage(){
-  let selectTestsDiv, backButton, myTestsTable, editTestTable;
+  let selectTestsDiv, backButton, myTestsTable, questionsTable;
   
   selectTestsDiv = $( "#selectTestsDiv" );
   backButton = $( "#backButton" );
   myTestsTable = $( "#myTestsTable" );
-  editTestTable = $( "#editTestTable" );
+  questionsTable = $( "#questionsTable" );
   
   selectTestsDiv.attr( "hidden", true );
   backButton.css( "display", "none" );
   myTestsTable.attr( "hidden", true );
-  editTestTable.attr( "hidden", true );
+  questionsTable.attr( "hidden", true );
   
   switch( page ){
     case "selectTests": selectTestsDiv.attr( "hidden", false ); break;
@@ -20,7 +20,7 @@ function switchPage(){
       backButton.css( "display", "inline-block" );
     break;
     case "editTest":
-      editTestTable.attr( "hidden", false );
+      questionsTable.attr( "hidden", false );
       backButton.css( "display", "inline-block" );
     break;
   }
@@ -42,256 +42,164 @@ function exitButtonHandler(){
   window.open( "index.html", "_self" );
 }
 
-function getMyTestsOrQuestions( mode, testId ){
-  let data, arr;
-  
-  if( !mode ) gTestId = testId;
-  
-  data = {
-    "event" : "",
-    "token" : cookie[ "token" ]
-  };
-  
-  if( mode ){
-    data[ "event" ] = "get user tests",
-    data[ "lastTestId" ] = lastMyTestId
-  } else {
-    data[ "event" ] = "get questions",
-    data[ "testId" ] = testId
-  }
-  
-  sendRequest( "POST", originURL, data, ( r ) => {
-    if( r[ "event" ] == "success" ){
-      if( mode ){
-        page = "myTests";
-        switchPage();
-        history.pushState( "", "", "/privateOffice.html?page=myTests" );
-      } else {
-        page = "editTest";
-        switchPage();
-        history.pushState( "", "", "/privateOffice.html?page=editTest&testId=" + testId );
-        $( "#editTestTable .index" ).each( function(){
-          $( this ).parent().remove();
-        } );
-      }
-      
-      arr = r[ "message" ];
-      
-      if( arr.length > 0 && mode ) lastMyTestId = arr[ arr.length - 1 ][0];
-      
-      for( let i = 0; i < arr.length; i++ ) addTestOrQuestion( mode, arr[i][0], arr[i][2] );
-    } else alert( r[ "message" ] );
-  } );
-}
-
 function backButtonHandler(){
   switch( page ){
     case "myTests": switchToSelectTestsPage(); break;
-    case "editTest": getMyTestsOrQuestions( true ); break;
+    case "editTest": myTestsButtonHandler( myTestsEditTable ); break;
   }
 }
 
-function saveTitle( mode, sender, id ){
-  let html, data;
-  
-  html = sender.parent().children().eq( 1 ).html();
+function addTest( editTable ){
+  let data, id;
   
   data = {
-    "event" : "",
-    "token" : cookie[ "token" ]
+    "event" : "add test",
+    "token" : cookie[ "token" ],
+    "name" : editTable.getLastEl()
   };
   
-  if( mode ){
-    data[ "event" ] = "edit test name";
-    data[ "testId" ] = id;
-    data[ "name" ] = html;
-  } else {
-    data[ "event" ] = "edit question name",
-    data[ "questionId" ] = id;
-    data[ "question" ] = html;
-  }
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "success" ){
+      id = r[ "message" ];
+      lastMyTestId = id;
+      editTable.getLastRow().attr( "testId", id );
+    }
+    else alert( r[ "message" ] );
+  } );
+}
+
+function saveTestName( sender ){
+  let prnt, data;
+  
+  prnt = sender.parent();
+  data = {
+    "event" : "edit test name",
+    "token" : cookie[ "token" ],
+    "testId" : prnt.attr( "testId" ),
+    "name" : prnt.children().eq( 1 ).html()
+  };
   
   sendRequest( "POST", originURL, data, ( r ) => {
     if( r[ "event" ] == "error" ) alert( r[ "message" ] );
   } );
 }
 
-function deleteTestOrQuestion( mode, sender, id ){
-  let data, indexes, i;
-  
-  data = {
-    "event" : "",
-    "token" : cookie[ "token" ]
-  };
-  
-  if( mode ){
-    data[ "event" ] = "delete test";
-    data[ "testId" ] = id;
-    indexes = $( "#myTestsTable .index" );
-  } else{
-    data[ "event" ] = "delete question";
-    data[ "questionId" ] = id;
-    indexes = $( "#editTestTable .index" );
-  }
-  
-  sendRequest( "POST", originURL, data, ( r ) => {
-    if( r[ "event" ] == "success" ){
-      sender.parent().remove();
-      i = 1;
-      indexes.each( function(){
-        $( this ).html( i );
-        i++;
-      } );
-    } else alert( r[ "message" ] );
-  } );
-}
-
-function getEditTableTr( index, html, handlers ){
-  let tr, td;
-  
-  if( handlers == undefined ) handlers = {};
-  if( handlers.toString() != "[object Object]" ) handlers = {};
-  
-  tr = $( "<tr>" );
-  
-  td = $( "<td>" );
-  td.addClass( "allBorder index" );
-  td.html( index );
-  tr.append( td );
-  
-  td = $( "<td>" );
-  td.addClass( "bottomBorder title" );
-  td.html( html );
-  
-  if( handlers[ "title" ] != undefined && typeof( handlers[ "title" ] ) == "function" ) td.click( handlers[ "title" ] );
-  
-  tr.append( td );
-  
-  td = $( "<td>" );
-  td.addClass( "allBorder icon edit" );
-  td.attr( "isSelected", 0 );
-  
-  if( handlers[ "edit" ] != undefined && typeof( handlers[ "edit" ] ) == "function" ) td.click( handlers[ "edit" ] );
-  
-  tr.append( td );
-  
-  td = $( "<td>" );
-  td.addClass( "allBorder icon delete" );
-  
-  if( handlers[ "delete" ] != undefined && typeof( handlers[ "delete" ] ) == "function" ) td.click( handlers[ "delete" ] );
-  
-  tr.append( td );
-  
-  return tr;
-}
-
-function addNewTestOrQuestion( mode ){
+function deleteTest( sender ){
   let data;
   
   data = {
-    "event" : "",
-    "token" : cookie[ "token" ]
+    "event" : "delete test",
+    "token" : cookie[ "token" ],
+    "testId" : sender.parent().attr( "testId" )
   };
   
-  if( mode ){
-    data[ "event" ] = "add test";
-    data[ "name" ] = $( "#newTestNameTd" ).html();
-  }
-  else{
-    data[ "event" ] = "add question";
-    data[ "testId" ] = gTestId;
-    data[ "question" ] = $( "#newQuestionNameTd" ).html();
-    data[ "splitter" ] = ", ";
-    data[ "answers" ] = "";
-    data[ "type" ] = 0;
-  }
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "error" ) alert( r[ "message" ] );
+  } );
+}
+
+function myTestsButtonHandler( editTable ){
+  let data, tests;
+  
+  data = {
+    "event" : "get user tests",
+    "token" : cookie[ "token" ],
+    "lastTestId" : lastMyTestId
+  };
   
   sendRequest( "POST", originURL, data, ( r ) => {
     if( r[ "event" ] == "success" ){
-      id = r[ "message" ];
+      page = "myTests";
+      switchPage();
+      history.pushState( "", "", "/privateOffice.html?page=myTests" );
+      tests = r[ "message" ];
       
-      if( mode ){
-        lastMyTestId = id;
-        addTestOrQuestion( true, id, data[ "name" ] );
-      } else addTestOrQuestion( false, id, data[ "question" ] );
+      if( tests.length > 0 ) lastMyTestId = tests[ tests.length - 1 ][0];
+      
+      for( let i = 0; i < tests.length; i++ ){
+        editTable.addRow( null, tests[i][2] );
+        editTable.getLastRow().attr( "testId", tests[i][0] );
+      }
     } else alert( r[ "message" ] );
   } );
 }
 
-function addTestOrQuestion( mode, id, html ){
-  let index, insertBeforeElement, handlers, sender;
+function getQuestions( sender, editTable, id ){
+  let data, questions;
   
-  if( mode ){
-    index = $( "#myTestsTable" ).children().eq( 0 ).children().length;
-    insertBeforeElement = $( "#newTestNameTd" ).parent();
-  } else {
-    index = $( "#editTestTable" ).children().eq( 0 ).children().length;
-    insertBeforeElement = $( "#newQuestionNameTd" ).parent();
-  }
+  if( sender != null ) id = sender.parent().attr( "testId" );
   
-  handlers = {
-    "title" : () => {
-      if( mode ) getMyTestsOrQuestions( false, id );
-    },
-    "edit" : function(){
-      sender = $( this );
-      
-      editTitle( sender, sender.parent().children().eq( 1 ), () => {
-        saveTitle( mode, sender, id );
-      } );
-    },
-    "delete" : function(){
-      deleteTestOrQuestion( mode, $( this ), id );
-    }
+  data = {
+    "event" : "get questions",
+    "token" : cookie[ "token" ],
+    "testId" : id
   };
-  getEditTableTr( index, html, handlers ).insertBefore( insertBeforeElement );
-}
-
-function editHTMLWithInput( target, mode, successFunc ){
-  let input, inputValue, inputOldValue;
   
-  if( mode ){
-    input = $( "<input>" );
-    input.attr( "type", "text" );
-    input.addClass( "editText fullWidth" );
-    input.attr( "oldValue", target.html() );
-    input.attr( "value", target.html() );
-    
-    target.html( input );
-    input.select();
-  } else {
-    input = target.children().eq( 0 );
-    inputValue = input.val();
-    inputOldValue = input.attr( "oldValue" );
-    
-    if( inputValue != "" && inputValue != inputOldValue ){
-      target.html( inputValue );
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "success" ){
+      page = "editTest";
+      switchPage();
+      history.pushState( "", "", "/privateOffice.html?page=editTest&testId=" + data[ "testId" ] );
+      questions = r[ "message" ];
+      editTable.clear();
+      editTable.table.attr( "testId", id );
       
-      if( successFunc != undefined && typeof( successFunc ) == "function" ) successFunc();
-    }
-    else target.html( inputOldValue );
-  }
+      for( let i = 0; i < questions.length; i++ ){
+        editTable.addRow( null, questions[i][2] );
+        editTable.getLastRow().attr( "questionId", questions[i][0] );
+      }
+    } else alert( r[ "message" ] );
+  } );
 }
 
-function editTitle( sender, target, successFunc ){
-  if( parseInt( sender.attr( "isSelected" ) ) == 0 ){
-    sender.addClass( "selected" );
-    sender.attr( "isSelected", 1 );
-    editHTMLWithInput( target, true );
-  } else {
-    sender.removeClass( "selected" );
-    sender.attr( "isSelected", 0 );
-    editHTMLWithInput( target, false, successFunc );
-  }
+function addQuestion( editTable ){
+  let data;
+  
+  data = {
+    "event" : "add question",
+    "token" : cookie[ "token" ],
+    "testId" : editTable.table.attr( "testId" ),
+    "question" : editTable.getLastEl(),
+    "splitter" : ", ",
+    "answers" : "",
+    "type" : 0
+  };
+  
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "success" ) editTable.getLastRow().attr( "questionId", r[ "message" ] );
+    else alert( r[ "message" ] );
+  } );
 }
 
-function editTitleTdHandler(){
-  let sender, target;
+function saveQuestionName( sender ){
+  let prnt, data;
   
-  sender = $( this );
-  target = sender.parent().children().eq( 1 );
+  prnt = sender.parent();
   
-  editTitle( sender, target );
+  data = {
+    "event" : "edit question name",
+    "token" : cookie[ "token" ],
+    "questionId" : prnt.attr( "questionId" ),
+    "question" : prnt.children().eq( 1 ).html()
+  };
+  
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "error" ) alert( r[ "message" ] );
+  } );
+}
+
+function deleteQuestion( sender ){
+  let data;
+  
+  data = {
+    "event" : "delete question",
+    "token" : cookie[ "token" ],
+    "questionId" : sender.parent().attr( "questionId" )
+  };
+  
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "error" ) alert( r[ "message" ] );
+  } );
 }
 
 $( document ).ready( () => {
@@ -303,27 +211,45 @@ $( document ).ready( () => {
   
   originURL = window.location[ "origin" ];
   lastMyTestId = 0;
+  
+  questionsEditTable = new EditTable( $( "#questionsTable" ), {
+    "title" : "Вопрос",
+    "addClick" : () => {
+      addQuestion( questionsEditTable );
+    },
+    "handlers" : {
+      "titleClick" : () => {},
+      "editClick" : saveQuestionName,
+      "deleteClick" : deleteQuestion
+    }
+  } );
+  myTestsEditTable = new EditTable( $( "#myTestsTable" ), {
+    "title" : "Название теста",
+    "addClick" : () => {
+      addTest( myTestsEditTable );
+    },
+    "handlers" : {
+      "titleClick" : ( sender ) => {
+        getQuestions( sender, questionsEditTable );
+      },
+      "editClick" : saveTestName,
+      "deleteClick" : deleteTest
+    }
+  } );
+  
   parsedURL = parseURL();
   
   switch( parsedURL[ "page" ] ){
-    case "myTests": getMyTestsOrQuestions( true ); break;
+    case "myTests": myTestsButtonHandler( myTestsEditTable ); break;
     case "editTest":
-      if( parsedURL[ "testId" ] != undefined ) getMyTestsOrQuestions( false, parsedURL[ "testId" ] );
+      if( parsedURL[ "testId" ] != undefined ) getQuestions( null, questionsEditTable, parsedURL[ "testId" ] );
     break;
     default: switchToSelectTestsPage()
   }
   
   $( "#exitButton" ).click( exitButtonHandler );
   $( "#myTestsButton" ).click( () => {
-    getMyTestsOrQuestions( true );
+    myTestsButtonHandler( myTestsEditTable );
   } );
   $( "#backButton" ).click( backButtonHandler );
-  $( "#editNewTestNameTd" ).click( editTitleTdHandler );
-  $( "#addNewTestTd" ).click( () => {
-    addNewTestOrQuestion( true );
-  } );
-  $( "#editNewQuestionNameTd" ).click( editTitleTdHandler );
-  $( "#addNewQuestionTd" ).click( () => {
-    addNewTestOrQuestion( false );
-  } );
 } );

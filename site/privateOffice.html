@@ -13,6 +13,7 @@
     <script type = "text/javascript" src = "scripts/parseURLModule.js"></script>
     <script type = "text/javascript" src = "scripts/positionModule.js"></script>
     <script type = "text/javascript" src = "scripts/sendRequestModule.js"></script>
+    <script type = "text/javascript" src = "scripts/editTableModule.js"></script>
     <script type = "text/javascript" src = "scripts/privateOffice.js"></script>
   </head>
   
@@ -29,22 +30,7 @@
       </div>
     </div>
     
-    <table id = "myTestsTable" class = "editTable" hidden>
-      <tr>
-        <td></td>
-        <td id = "newTestNameTd" class = "bottomBorder leftBorder">Название теста</td>
-        <td id = "editNewTestNameTd" class = "allBorder icon edit" isSelected = 0></td>
-        <td id = "addNewTestTd" class = "allBorder icon add"></td>
-      </tr>
-    </table>
-    
-    <table id = "editTestTable" class = "editTable" hidden>
-      <tr>
-        <td></td>
-        <td id = "newQuestionNameTd" class = "bottomBorder leftBorder">Вопрос</td>
-        <td id = "editNewQuestionNameTd" class = "allBorder icon edit" isSelected = 0></td>
-        <td id = "addNewQuestionTd" class = "allBorder icon add"></td>
-      </tr>
-    </table>
+    <table id = "myTestsTable" hidden></table>
+    <table id = "questionsTable" hidden></table>
   </body>
 </html>

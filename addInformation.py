@@ -12,7 +12,6 @@ open( 'database.db', 'w' ).close()
 
 database = CDatabase( 'database.db' )
 database.addUser( login, password )
-database.addUser( 'dick', 'ukraine' )
 token = database.addToken( login )[1]
 tokenId = database.getTokenIdByToken( token )[1]
 database.addTest( token, testName )

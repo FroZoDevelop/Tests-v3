@@ -1,0 +1,70 @@
+.editTable{
+  //font-family : Century Gothic;
+  margin : 5px;
+  //width : 45%;
+}
+
+.editTable td{
+  padding : 5px;
+  text-align : center;
+}
+
+.editTable td:nth-child( 1 ){
+  width : 20px;
+}
+
+.editTable .bottomBorder{
+  border-bottom : rgb( 61, 201, 179 ) 2px solid;
+}
+
+.editTable .title:hover{
+  cursor : pointer;
+  border-bottom : rgba( 138, 134, 134, 0.3 ) 2px solid;
+}
+
+.editTable .leftBorder{
+  border-left : rgb( 61, 201, 179 ) 2px solid;
+}
+
+.editTable .allBorder{
+  border : rgb( 61, 201, 179 ) 2px solid;
+}
+
+.editTable .icon{
+  width : 20px;
+  background-repeat : no-repeat;
+  background-position : center;
+}
+
+.editTable .icon:hover, .editTable .selected{
+  cursor : pointer;
+  background-color : rgba( 61, 201, 179, 0.7 ) !important;
+  color : rgb( 255, 255, 255 );
+}
+
+.editTable .edit{
+  background-image : url( "../images/pen.png" );
+}
+
+.editTable .add{
+  background-image : url( "../images/plus.png" );
+}
+
+.editTable .editText{
+  border : none;
+  outline : none;
+  padding : 0px;
+  margin : 0px;
+  //font-family : Century Gothic;
+  //font-size : 16px;
+  text-align : center;
+  background : none;
+}
+
+.editTable .index{
+  font-weight : bold;
+}
+
+.editTable .delete{
+  background-image : url( "../images/cross.png" );
+}
