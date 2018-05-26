@@ -1,27 +1,28 @@
-let cookie, originURL, lastMyTestId, questionsEditTable, myTestsEditTable, page, gTestId;
+let cookie, originURL, lastMyTestId, answersEditTable, questionsEditTable, questions, myTestsEditTable, page, isQuestionSelected;
 
 function switchPage(){
-  let selectTestsDiv, backButton, myTestsTable, questionsTable;
+  let selectTestsDiv, backButton, myTestsDiv, editQuestionsDiv;
   
   selectTestsDiv = $( "#selectTestsDiv" );
   backButton = $( "#backButton" );
-  myTestsTable = $( "#myTestsTable" );
-  questionsTable = $( "#questionsTable" );
+  myTestsDiv = $( "#myTestsDiv" );
+  editQuestionsDiv = $( "#editQuestionsDiv" );
   
   selectTestsDiv.attr( "hidden", true );
   backButton.css( "display", "none" );
-  myTestsTable.attr( "hidden", true );
-  questionsTable.attr( "hidden", true );
+  myTestsDiv.attr( "hidden", true );
+  editQuestionsDiv.attr( "hidden", true );
   
   switch( page ){
     case "selectTests": selectTestsDiv.attr( "hidden", false ); break;
     case "myTests":
-      myTestsTable.attr( "hidden", false );
+      myTestsDiv.attr( "hidden", false );
       backButton.css( "display", "inline-block" );
     break;
     case "editTest":
-      questionsTable.attr( "hidden", false );
+      editQuestionsDiv.attr( "hidden", false );
       backButton.css( "display", "inline-block" );
+      answersEditTable.clear();
     break;
   }
 }
@@ -125,7 +126,7 @@ function myTestsButtonHandler( editTable ){
 }
 
 function getQuestions( sender, editTable, id ){
-  let data, questions;
+  let data, testURL, testURLA;
   
   if( sender != null ) id = sender.parent().attr( "testId" );
   
@@ -144,10 +145,16 @@ function getQuestions( sender, editTable, id ){
       editTable.clear();
       editTable.table.attr( "testId", id );
       
-      for( let i = 0; i < questions.length; i++ ){
+      for( let i = 0; i < questions.length - 1; i++ ){
         editTable.addRow( null, questions[i][2] );
         editTable.getLastRow().attr( "questionId", questions[i][0] );
+        questions[i][4] = questions[i][4].split( questions[i][3] );
       }
+      
+      testURL = originURL + "/test.html?token=" + questions[ questions.length - 1 ];
+      testURLA = $( "#testURLA" );
+      testURLA.attr( "href", testURL );
+      testURLA.html( testURL );
     } else alert( r[ "message" ] );
   } );
 }
@@ -202,23 +209,128 @@ function deleteQuestion( sender ){
   } );
 }
 
+function getAnswers( sender, editTable ){
+  let prnt, id, data;
+  
+  prnt = sender.parent();
+  id = prnt.attr( "questionId" );
+  
+  for( let i = 0; i < questions.length; i++ ) if( questions[i][0] == id ){
+    prnt.parent().find( ".title" ).each( function(){
+      $( this ).removeClass( "titleSelected" );
+    } );
+    prnt.children().eq( 1 ).addClass( "titleSelected" );
+    editTable.table.attr( "questionIndex", i );
+    editTable.clear();
+    
+    if( questions[i][4].length > 0 && questions[i][4][0] != "" ){
+      for( let j = 0; j < questions[i][4].length; j++ ){
+        editTable.addRow( null, questions[i][4][j] );
+        editTable.getLastRow().attr( "answerIndex", j );
+      }
+      
+      data = {
+        "event" : "get right answer",
+        "token" : cookie[ "token" ],
+        "questionId" : questions[i][0]
+      };
+      
+      sendRequest( "POST", originURL, data, ( r ) => {
+        if( r[ "event" ] == "success" ){
+          editTable.table.find( ".title" ).eq( parseInt( r[ "message" ][0][3] ) ).addClass( "titleSelected" );
+        }
+      } );
+    }
+  }
+  
+  isQuestionSelected = true;
+}
+
+function saveAnswers( editTable ){
+  let index, answers, data;
+  
+  editTable = editTable.table;
+  index = parseInt( editTable.attr( "questionIndex" ) );
+  answers = [];
+  editTable.find( ".title" ).each( function(){
+    answers.push( $( this ).html() );
+  } );
+  questions[ index ][4] = answers;
+  
+  data = {
+    "event" : "edit answers",
+    "token" : cookie[ "token" ],
+    "questionId" : questions[ index ][0],
+    "splitter" : ", ",
+    "answers" : answers.join( ", " ),
+    "type" : 0
+  };
+  
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "error" ) alert( r[ "message" ] );
+  } );
+}
+
+function selectRightAnswer( editTable, sender ){
+  let answer, data;
+  
+  data = {
+    "event" : "add right answer",
+    "token" : cookie[ "token" ],
+    "questionId" : questions[ parseInt( editTable.table.attr( "questionIndex" ) ) ][0],
+    "splitter" : ", ",
+    "answers" : sender.parent().attr( "answerIndex" )
+  };
+  
+  sendRequest( "POST", originURL, data, ( r ) => {
+    if( r[ "event" ] == "success" ){
+      editTable.table.find( ".title" ).each( function(){
+        $( this ).removeClass( "titleSelected" );
+      } );
+      sender.addClass( "titleSelected" );
+    }
+  } );
+}
+
 $( document ).ready( () => {
   let parsedURL;
   
   cookie = getCookie();
   
-  if( cookie[ "token" ] == undefined || cookie[ "enterType" ] == undefined ) window.open( "index.html", "_self" );
+  if( cookie[ "token" ] == undefined || cookie[ "token" ] == "" || cookie[ "enterType" ] == undefined || cookie[ "enterType" ] == "" )
+    window.open( "index.html", "_self" );
   
   originURL = window.location[ "origin" ];
   lastMyTestId = 0;
+  isQuestionSelected = false;
   
+  answersEditTable = new EditTable( $( "#answersTable" ), {
+    "title" : "Вариант ответа",
+    "addClick" : () => {
+      if( !isQuestionSelected ) answersEditTable.clear();
+      else saveAnswers( answersEditTable );
+    },
+    "handlers" : {
+      "titleClick" : ( sender ) => {
+        selectRightAnswer( answersEditTable, sender );
+      },
+      "editClick" : () => {
+        saveAnswers( answersEditTable );
+      },
+      "deleteClick" : () => {
+        saveAnswers( answersEditTable );
+      }
+    }
+  } );
   questionsEditTable = new EditTable( $( "#questionsTable" ), {
     "title" : "Вопрос",
     "addClick" : () => {
       addQuestion( questionsEditTable );
     },
     "handlers" : {
-      "titleClick" : () => {},
+      "titleClick" : ( sender ) => {
+        getAnswers( sender, answersEditTable );
+      },
       "editClick" : saveQuestionName,
       "deleteClick" : deleteQuestion
     }

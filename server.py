@@ -114,6 +114,7 @@ class CRequestHandler( BaseHTTPRequestHandler ):
       # [E] Get questions
       elif event == 'get questions':
         code = database.getQuestions( data[ 'token' ], data[ 'testId' ] )
+        print( code[1] )
         response = getResponse( code[0], code[1] )
       
       # [E] Add question
@@ -129,6 +130,33 @@ class CRequestHandler( BaseHTTPRequestHandler ):
       # [E] Delete question
       elif event == 'delete question':
         code = database.deleteQuestion( data[ 'token' ], data[ 'questionId' ] )
+        response = getResponse( code[0], code[1] )
+      
+      # [E] Edit asnwers
+      elif event == 'edit answers':
+        print( data )
+        code = database.editAnswers( data[ 'token' ], data[ 'questionId' ], data[ 'splitter' ], data[ 'answers' ], data[ 'type' ] )
+        response = getResponse( code[0], code[1] )
+      
+      # [E] Get right answer
+      elif event == 'get right answer':
+        print( data )
+        code = database.getRightAnswer( data[ 'token' ], data[ 'questionId' ] )
+        response = getResponse( code[0], code[1] )
+      
+      # [E] Add right answer
+      elif event == 'add right answer':
+        code = database.addRightAnswer( data[ 'token' ], data[ 'questionId' ], data[ 'splitter' ], data[ 'answers' ] )
+        response = getResponse( code[0], code[1] )
+      
+      # [E] Get test
+      elif event == 'get test':
+        code = database.getTest( data[ 'token' ], data[ 'testToken' ] )
+        response = getResponse( code[0], code[1] )
+      
+      # [E] Send answers
+      elif event == 'add answers':
+        code = database.addAnswers( data[ 'token' ], data[ 'testToken' ], data[ 'answers' ] )
         response = getResponse( code[0], code[1] )
     except:
       response = getResponse( 'error', 'Undefined request' )

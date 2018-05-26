@@ -106,6 +106,13 @@ class CDatabase:
       answers text not null
     )''' )
     
+    self.cur.execute( '''create table if not exists passedTests(
+      id integer primary key autoincrement not null,
+      tokenId integer not null,
+      testId integer not null,
+      points integer not null
+    )''' )
+    
     self.cur.execute( 'select randomSeed from randomSeed' )
     
     if len( self.cur.fetchall() ) == 0: self.cur.execute( 'insert into randomSeed( randomSeed ) values( ? )', ( randint( 500, 10000 ), ) )
@@ -259,9 +266,13 @@ class CDatabase:
     
     if testValidInfo[0] == 'error': return [ testValidInfo[0], testValidInfo[1] ]
     
+    self.cur.execute( 'select token from tests where id = ?', ( testId, ) )
+    testToken = self.cur.fetchall()[0][0]
     self.cur.execute( 'select * from questions where testId = ?', ( testId, ) )
+    questions = self.cur.fetchall()
+    questions.append( testToken )
     
-    return self.getSuccess( 'custom', self.cur.fetchall() )
+    return self.getSuccess( 'custom', questions )
   
   def addQuestion( self, token, testId, question, splitter, answers, type ):
     testValidInfo = self.checkValidTest( token, testId )
@@ -303,3 +314,110 @@ class CDatabase:
     self.conn.commit()
     
     return self.getSuccess( 'S' )
+  
+  def editAnswers( self, token, questionId, splitter, answers, type ):
+    self.cur.execute( 'select testId from questions where id = ?', ( questionId, ) )
+    testId = self.cur.fetchall()
+    
+    if len( testId ) == 0: return self.getError( 'TDE' )
+    
+    testValidInfo = self.checkValidTest( token, testId[0][0] )
+    
+    if testValidInfo[0] == 'error': return [ testValidInfo[0], testValidInfo[1] ]
+    
+    self.cur.execute( 'update questions set splitter = ?, answers = ?, type = ? where id = ?', ( splitter, answers, type, questionId, ) )
+    self.conn.commit()
+    
+    return self.getSuccess( 'S' )
+  
+  def getRightAnswer( self, token, questionId ):
+    self.cur.execute( 'select testId from questions where id = ?', ( questionId, ) )
+    testId = self.cur.fetchall()
+    
+    if len( testId ) == 0: return self.getError( 'TDE' )
+    
+    testValidInfo = self.checkValidTest( token, testId[0][0] )
+    
+    if testValidInfo[0] == 'error': return [ testValidInfo[0], testValidInfo[1] ]
+    
+    self.cur.execute( 'select * from rightAnswers where questionId = ?', ( questionId, ) )
+    
+    return self.getSuccess( 'custom', self.cur.fetchall() )
+  
+  def addRightAnswer( self, token, questionId, splitter, answers ):
+    self.cur.execute( 'select testId from questions where id = ?', ( questionId, ) )
+    testId = self.cur.fetchall()
+    
+    if len( testId ) == 0: return self.getError( 'TDE' )
+    
+    testValidInfo = self.checkValidTest( token, testId[0][0] )
+    
+    if testValidInfo[0] == 'error': return [ testValidInfo[0], testValidInfo[1] ]
+    
+    self.cur.execute( 'select id from rightAnswers where questionId = ?', ( questionId, ) )
+    id = self.cur.fetchall()
+    
+    if len( id ) == 0: self.cur.execute( 'insert into rightAnswers( questionId, splitter, answers ) values( ?, ?, ? )', ( questionId, splitter, answers ) )
+    else: self.cur.execute( 'update rightAnswers set splitter = ?, answers = ? where questionId = ?', ( splitter, answers, questionId ) )
+    
+    self.conn.commit()
+    
+    return self.getSuccess( 'S' )
+  
+  def getTest( self, token, testToken ):
+    tokenInfo = self.getTokenIdByToken( token )
+    
+    if tokenInfo[0] == 'error': return [ tokenInfo[0], tokenInfo[1] ]
+    
+    self.cur.execute( 'select id, name from tests where token = ?', ( testToken, ) )
+    testInfo = self.cur.fetchall()
+    
+    if len( testInfo ) == 0: return self.getError( 'TDE' )
+    
+    testInfo = testInfo[0]
+    self.cur.execute( 'select * from questions where testId = ?', ( testInfo[0], ) )
+    
+    return self.getSuccess( 'custom', ( testInfo[1], self.cur.fetchall() ) )
+  
+  def addAnswers( self, token, testToken, answers ):
+    tokenInfo = self.getTokenIdByToken( token )
+    
+    if tokenInfo[0] == 'error': return [ tokenInfo[0], tokenInfo[1] ]
+    
+    self.cur.execute( 'select id from tests where token = ?', ( testToken, ) )
+    testId = self.cur.fetchall()
+    
+    if len( testId ) == 0: return self.getError( 'TDE' )
+    
+    testId = testId[0][0]
+    executeString = 'select splitter, answers from rightAnswers where' + ' questionId = ? or' * len( answers )
+    executeString = executeString[ :-3 ]
+    questionsIds = []
+    
+    for answer in answers:
+      questionsIds.append( answer[0] )
+    
+    self.cur.execute( executeString, questionsIds )
+    rightAnswers = self.cur.fetchall()
+    points = 0
+    
+    for i in range( len( rightAnswers ) ):
+      tmp = rightAnswers[i][1].split( rightAnswers[i][0] )
+      
+      for j in range( len( tmp ) ):
+        if answers[i][1][j] == int( tmp[j] ): points += 1
+    
+    self.cur.execute( 'select points from passedTests where tokenId = ? and testId = ?', ( tokenInfo[1], testId ) )
+    pointsFromPassedTests = self.cur.fetchall()
+    
+    if len( pointsFromPassedTests ) == 0:
+      self.cur.execute( 'insert into passedTests( tokenId, testId, points ) values( ?, ?, ? )', ( tokenInfo[1], testId, points ) )
+      self.conn.commit()
+    else:
+      pointsFromPassedTests = int( pointsFromPassedTests[0][0] )
+      
+      if points > pointsFromPassedTests:
+        self.cur.execute( 'update passedTests set points = ? where tokenId = ? and testId = ?', ( points, tokenInfo[1], testId ) )
+        self.conn.commit()
+    
+    return self.getSuccess( 'custom', points )
